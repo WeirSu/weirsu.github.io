@@ -3,7 +3,7 @@ title: N1CTF Junior 2026 1_2 Pwn (部分)
 published: 2026-02-15
 description: '自己还是太菜了'
 image: ''
-tags: [pwn]
+tags: [Pwn]
 category: 'WP'
 draft: false
 ---

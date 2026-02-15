@@ -1,10 +1,10 @@
 ---
-title: 菜鸡写的ret2libc的教程
+title: ret2libc的学习笔记
 published: 2026-02-15
 description: 'What is ret2libc?'
 image: ''
 tags: [Pwn,Stack]
-category: '教程'
+category: '笔记'
 draft: false
 ---
 

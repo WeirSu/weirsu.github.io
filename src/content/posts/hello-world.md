@@ -1,7 +1,7 @@
 ---
-title: The Frist!
+title: The First!
 published: 2026-02-15
-description: '第一篇文章！'
+description: 'hello world！'
 image: ''
 tags: [日常]
 category: '生活'
@@ -12,7 +12,10 @@ draft: false
 
 终于把博客搭好了！
 
-以后我会在在这里分享：
+这里是**Weir_Su**
+
+这里有：
+
 - CTF Pwn 题解
-- 技术学习笔记
-- 生活碎碎念
+- Pwn学习笔记
+- 生活碎碎念（可能有？）
