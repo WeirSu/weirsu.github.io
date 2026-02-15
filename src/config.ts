@@ -45,6 +45,11 @@ export const navBarConfig: NavBarConfig = {
 		LinkPreset.Archive,
 		LinkPreset.About,
 		{
+      		name: "友链",           // 导航栏显示的名称
+      		url: "/links/",        // 对应你创建的 src/content/spec/links.md
+      		external: false,       // 内部页面，不需要显示外部链接图标
+    	},
+		{
 			name: "GitHub",
 			url: "https://github.com/WeirSu", // Internal links should not include the base path, as it is automatically added
 			external: true, // Show an external link icon and will open in a new tab
