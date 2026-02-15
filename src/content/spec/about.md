@@ -1,9 +1,15 @@
-# About
-This is the demo site for [Fuwari](https://github.com/saicaca/fuwari).
+---
+title: About
+description: 关于我
+---
 
-::github{repo="saicaca/fuwari"}
+# 关于我
 
-> ### Sources of images used in this site
-> - [Unsplash](https://unsplash.com/)
-> - [星と少女](https://www.pixiv.net/artworks/108916539) by [Stella](https://www.pixiv.net/users/93273965)
-> - [Rabbit - v1.4 Showcase](https://civitai.com/posts/586908) by [Rabbit_YourMajesty](https://civitai.com/user/Rabbit_YourMajesty)
+Who am i?
+我是Weir_Su，中文名苏韦尔（虽然正确译法应该是是苏威尔但是我不管）
+一个pwn苦手
+
+## 🚩 CTF经历
+
+- 奖项还在来的路上，会有的会有的...
+
