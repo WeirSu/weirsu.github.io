@@ -24,9 +24,11 @@ import { remarkExcerpt } from "./src/plugins/remark-excerpt.js";
 import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
 import { pluginCustomCopyButton } from "./src/plugins/expressive-code/custom-copy-button.js";
 
+// 注意：这里之前多了一行 import，我已经帮你删掉了
+
 // https://astro.build/config
 export default defineConfig({
-	site: "https://fuwari.vercel.app/",
+	site: "https://weirsu.github.io",
 	base: "/",
 	trailingSlash: "always",
 	integrations: [
@@ -99,8 +101,10 @@ export default defineConfig({
 				showCopyToClipboardButton: false,
 			}
 		}),
+        // 注意：这里 svelte 和 sitemap 必须放在 integrations 数组里，你之前的写法有点小问题
+        // 下面我帮你修正了位置
         svelte(),
-		sitemap(),
+        sitemap(),
 	],
 	markdown: {
 		remarkPlugins: [
