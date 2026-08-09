@@ -23,7 +23,7 @@ draft: false
 从左到右的顺序，依次点击环境变量-Path-新建
 ![](Windows下的Nc命令.assets/file-20260809111708968.png)
 会在最后一栏新建一个框，我们把将复制的路劲粘贴进去
-![](Windows下的Nc命令.assets/file-20260809111840273.png)最后一次确认退出即可
+![](Windows下的Nc命令.assets/file-20260809111840273.png)最后依次确认退出即可
 在这之后，鼠标任意右键文件夹或是桌面
 ![](Windows下的Nc命令.assets/file-20260809112017625.png)
 点击在终端中打开
