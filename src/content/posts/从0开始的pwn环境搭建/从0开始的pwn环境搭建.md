@@ -440,5 +440,87 @@ chmod +x ./setup.sh
 效果是，在tmux运行脚本时，如果使用gdb.attach，新开的GDB窗口会上下分屏，且在下方
 方便调试
 
+### 可能遇到的问题
 
+如果你也和我一样，遇到了ls不能无法正常显示中文文件名
+
+#### 问题现象
+
+Ubuntu 26.04 中执行 `ls` 时，中文文件名被显示成转义字符：
+
+```bash
+'202512'$'\345\237\271\350\256\255'
+```
+
+或者显示成：
+
+```bash
+202512??????
+```
+
+但使用 Bash 直接输出文件名时正常：
+
+```bash
+printf '%s\n' ./*
+```
+
+#### 原因
+
+Ubuntu 26.04 默认使用 Rust 实现的 `uutils coreutils`：
+
+```bash
+ls --version | head -n 1
+```
+
+输出类似：
+
+```bash
+ls (uutils coreutils) 0.8.0
+```
+
+该版本的 `ls` 对 locale 的处理与 GNU `ls` 有差异。如果系统没有生成完整的 UTF-8 locale，或者只使用 `C.UTF-8`，`ls` 可能把中文判断成不可打印字符并进行转义。
+ 这不是 Bash、终端或文件名损坏，而是 `uutils ls` 与当前 locale 配置的兼容问题。
+
+#### 解决方法
+
+安装 locale 包并生成 `en_US.UTF-8`：
+
+```bash
+sudo apt update
+sudo apt install locales
+sudo locale-gen en_US.UTF-8
+sudo update-locale LANG=en_US.UTF-8
+```
+
+让当前终端立即使用：
+
+```bash
+unset LC_ALL LC_CTYPE LC_COLLATE
+export LANG=en_US.UTF-8
+```
+
+如果是 WSL，也可以关闭所有 WSL 实例后重新打开：
+
+```powershell
+wsl --shutdown
+```
+
+#### 验证
+
+```bash
+locale -a | grep -i en_US
+locale charmap
+ls --version | head -n 1
+ls
+```
+
+预期能看到：
+
+```text
+en_US.utf8
+UTF-8
+ls (uutils coreutils) 0.8.0
+```
+
+此时中文文件名应该正常显示。
 
